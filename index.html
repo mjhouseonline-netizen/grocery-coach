@@ -2,70 +2,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pocket Grocery Coach</title>
+    <title>Holiday Grocery Coach</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Font: Mountains of Christmas for headers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <!-- QuaggaJS for Barcode Scanning -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-
         :root {
-            --color-bg: #Fdfbf7; /* Creamy White */
-            --color-primary: #FF9F43; /* Vibrant Orange */
-            --color-secondary: #2ECC71; /* Fresh Green */
-            --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --color-bg: #FDFBF7; 
+            --color-red: #D42426; /* Christmas Red */
+            --color-green: #146B3A; /* Evergreen */
+            --color-gold: #F8B229; /* Sleigh Bell Gold */
+            --shadow-soft: 0 10px 25px -5px rgba(212, 36, 38, 0.15);
         }
 
         body {
             font-family: 'Nunito', sans-serif;
             background-color: var(--color-bg);
+            background-image: radial-gradient(#E5E7EB 1px, transparent 1px);
+            background-size: 20px 20px;
             color: #2D3436;
             padding-bottom: 90px;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* Holiday Fonts */
+        h1, h2, .holiday-font {
+            font-family: 'Mountains of Christmas', cursive;
+            letter-spacing: 1px;
         }
 
         .app-card {
             background: white;
             border-radius: 24px;
             box-shadow: var(--shadow-soft);
+            border: 2px solid #F3F4F6;
         }
 
+        /* Festive Buttons */
         .btn-main {
-            background: linear-gradient(135deg, var(--color-primary), #FFB86C);
+            background: linear-gradient(135deg, var(--color-red), #FF4B4B);
             color: white;
             border-radius: 16px;
             font-weight: 800;
-            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.4);
+            box-shadow: 0 4px 12px rgba(212, 36, 38, 0.4);
             transition: all 0.2s;
+            border: 2px solid white;
         }
         .btn-main:active { transform: scale(0.96); }
 
+        /* Candy Cane Inputs */
         .input-field {
-            background: #F4F6F8;
-            border: 2px solid transparent;
+            background: #FFF;
+            border: 2px solid #E5E7EB;
             border-radius: 14px;
             width: 100%;
             padding: 12px;
         }
         .input-field:focus {
             background: white;
-            border-color: var(--color-primary);
+            border-color: var(--color-green);
             outline: none;
+            box-shadow: 0 0 0 3px rgba(20, 107, 58, 0.1);
         }
 
+        /* Striped Budget Bar */
         .budget-bar {
-            background: #2D3436;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--color-green),
+                var(--color-green) 10px,
+                #1a844a 10px,
+                #1a844a 20px
+            );
             color: white;
             border-radius: 18px;
             position: sticky;
             top: 10px;
             z-index: 40;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: 2px solid white;
         }
-        .budget-bar.over { background: #FF6B6B; }
+        .budget-bar.over { 
+            background: repeating-linear-gradient(
+                45deg,
+                var(--color-red),
+                var(--color-red) 10px,
+                #b91c1e 10px,
+                #b91c1e 20px
+            );
+        }
 
+        /* Nav Bar */
         .nav-bar {
             position: fixed;
             bottom: 20px;
@@ -73,7 +107,8 @@
             transform: translateX(-50%);
             width: 90%;
             max-width: 400px;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             display: flex;
@@ -81,6 +116,7 @@
             align-items: center;
             padding: 10px;
             z-index: 100;
+            border: 1px solid #F3F4F6;
         }
         .nav-item {
             color: #B2BEC3;
@@ -92,44 +128,29 @@
             border: none;
             background: none;
         }
-        .nav-item.active { color: var(--color-primary); }
+        .nav-item.active { color: var(--color-red); }
+        .nav-item.active i { transform: scale(1.1); transition: transform 0.2s; }
         
-        #scanner-container {
+        /* Snow Animation */
+        .snowflake {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: black;
-            z-index: 200;
-            display: none;
+            top: -10px;
+            z-index: -1;
+            color: #dbeafe;
+            font-size: 1em;
+            pointer-events: none;
+            animation: fall linear forwards;
         }
-        #interactive.viewport {
-            width: 100%;
-            height: 100%;
-        }
-        #interactive.viewport video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .scan-line {
-            position: absolute;
-            top: 50%; left: 10%; right: 10%;
-            height: 2px;
-            background: red;
-            box-shadow: 0 0 4px red;
-            animation: scan 2s infinite;
-        }
-        @keyframes scan {
-            0% { top: 30%; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 70%; opacity: 0; }
+        @keyframes fall {
+            to { transform: translateY(105vh); }
         }
 
-        /* Custom Modal & Toast Styles */
+        /* Modal & Toast */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(2px);
+            background: rgba(20, 107, 58, 0.4); /* Green tint */
+            backdrop-filter: blur(3px);
             z-index: 300;
             display: flex;
             align-items: center;
@@ -138,10 +159,7 @@
             pointer-events: none;
             transition: opacity 0.3s;
         }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-content {
             background: white;
             width: 90%;
@@ -151,61 +169,72 @@
             text-align: center;
             transform: translateY(20px);
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 4px solid var(--color-red);
         }
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
         
         .toast {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
-            background: #2D3436;
+            background: var(--color-red);
             color: white;
             padding: 12px 24px;
             border-radius: 50px;
             font-weight: 700;
             font-size: 0.875rem;
             z-index: 400;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(212, 36, 38, 0.3);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             gap: 10px;
             width: max-content;
             max-width: 90%;
+            border: 2px solid white;
         }
-        .toast.active {
-            transform: translateX(-50%) translateY(0);
-        }
+        .toast.active { transform: translateX(-50%) translateY(0); }
         
+        /* Scanner */
+        #scanner-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: black;
+            z-index: 200;
+            display: none;
+        }
+        #interactive.viewport { width: 100%; height: 100%; }
+        #interactive.viewport video { width: 100%; height: 100%; object-fit: cover; }
         .hidden { display: none; }
     </style>
 </head>
-<body class="px-4 pt-4 max-w-md mx-auto">
+<body class="px-4 pt-4 max-w-md mx-auto relative">
 
     <!-- Toast Notification -->
     <div id="toast" class="toast">
-        <i class="fas fa-info-circle text-orange-400"></i>
+        <i class="fas fa-sleigh text-yellow-300"></i>
         <span id="toast-message">Notification</span>
     </div>
 
     <!-- Custom Generic Modal -->
     <div id="custom-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div id="modal-icon" class="text-4xl mb-4 text-orange-500"></div>
-            <h3 id="modal-title" class="text-xl font-extrabold text-slate-800 mb-2"></h3>
+        <div class="modal-content relative">
+            <!-- Holly Decoration -->
+            <div class="absolute -top-4 -right-4 text-3xl text-red-600 drop-shadow-md transform rotate-12">
+                <i class="fas fa-holly-berry"></i>
+            </div>
+            <div id="modal-icon" class="text-4xl mb-4 text-green-600"></div>
+            <h3 id="modal-title" class="text-2xl font-extrabold text-slate-800 mb-2 holiday-font text-red-700"></h3>
             <p id="modal-body" class="text-sm text-slate-500 mb-6"></p>
             
-            <!-- Dynamic Content Area (Inputs etc) -->
             <div id="modal-input-area" class="mb-4 hidden">
                 <input type="text" id="modal-input" class="input-field text-center font-bold text-lg">
             </div>
 
             <div class="flex gap-2 justify-center">
                 <button id="modal-cancel" class="px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-100 transition-colors">Cancel</button>
-                <button id="modal-confirm" class="px-8 py-3 rounded-xl font-bold bg-orange-500 text-white shadow-lg shadow-orange-200">Confirm</button>
+                <button id="modal-confirm" class="px-8 py-3 rounded-xl font-bold bg-green-700 text-white shadow-lg shadow-green-200">Confirm</button>
             </div>
         </div>
     </div>
@@ -213,7 +242,7 @@
     <!-- Scanner Overlay -->
     <div id="scanner-container">
         <div id="interactive" class="viewport"></div>
-        <div class="scan-line"></div>
+        <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_10px_red]"></div>
         <button onclick="stopScanner()" class="absolute top-8 right-8 text-white text-4xl z-50 hover:text-red-400 transition-colors">&times;</button>
         <div class="absolute bottom-10 left-0 right-0 text-center text-white font-bold p-4 bg-black/50 backdrop-blur-sm">
             Point camera at barcode
@@ -221,57 +250,62 @@
     </div>
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-4 px-2">
+    <div class="flex justify-between items-center mb-6 px-2 mt-2">
         <div>
-            <h1 class="text-2xl font-extrabold text-slate-800">Grocery Coach</h1>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Day 12 Edition</p>
+            <h1 class="text-3xl font-extrabold text-red-700 drop-shadow-sm">Grocery Coach</h1>
+            <p class="text-xs text-green-700 font-bold uppercase tracking-wide bg-green-100 px-2 py-1 rounded-full inline-block">
+                <i class="fas fa-tree mr-1"></i> Day 12 Edition
+            </p>
         </div>
-        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 shadow-sm">
-            <i class="fas fa-carrot text-lg"></i>
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 shadow-md border-2 border-red-200">
+            <i class="fas fa-gift text-2xl"></i>
         </div>
     </div>
 
     <!-- Budget Banner -->
     <div id="budget-banner" class="budget-bar p-4 mb-6 flex justify-between items-center transition-colors duration-300">
         <div>
-            <p class="text-[10px] font-bold uppercase opacity-60 mb-1">Remaining Budget</p>
-            <p id="remaining-display" class="text-3xl font-black tracking-tight">$100.00</p>
+            <p class="text-[10px] font-bold uppercase opacity-80 mb-1">Holiday Budget</p>
+            <p id="remaining-display" class="text-3xl font-black tracking-tight drop-shadow-md">$100.00</p>
         </div>
         <div class="text-right">
-            <div class="bg-white/10 px-3 py-1 rounded-lg mb-1">
-                <span class="text-xs font-bold opacity-80">Total: </span>
+            <div class="bg-black/20 px-3 py-1 rounded-lg mb-1 backdrop-blur-sm">
+                <span class="text-xs font-bold opacity-90">Spent: </span>
                 <span id="spend-display" class="font-bold">$0.00</span>
             </div>
-            <button onclick="promptBudget()" class="text-xs font-bold underline opacity-60 hover:opacity-100">Edit Limit</button>
+            <button onclick="promptBudget()" class="text-xs font-bold underline opacity-80 hover:opacity-100">Edit Limit</button>
         </div>
     </div>
 
     <!-- VIEW: PLAN (List) -->
     <div id="view-plan" class="pb-24">
-        <div class="app-card p-4 mb-4">
-            <div class="flex gap-2 mb-4">
-                <button onclick="startScanner('new-item')" class="text-slate-400 hover:text-orange-500 px-2 transition-colors">
+        <div class="app-card p-4 mb-4 relative overflow-hidden">
+            <!-- Background Decoration -->
+            <i class="fas fa-snowflake absolute -top-4 -right-4 text-6xl text-slate-50 opacity-50"></i>
+            
+            <div class="flex gap-2 mb-4 relative z-10">
+                <button onclick="startScanner('new-item')" class="text-slate-400 hover:text-red-500 px-2 transition-colors">
                     <i class="fas fa-barcode text-xl"></i>
                 </button>
-                <input type="text" id="new-item" placeholder="Add item..." class="input-field w-full p-3 font-bold text-slate-700" onkeypress="handleEnter(event, addItem)">
+                <input type="text" id="new-item" placeholder="Add treats..." class="input-field w-full p-3 font-bold text-slate-700 placeholder-slate-300" onkeypress="handleEnter(event, addItem)">
                 <button onclick="addItem()" class="btn-main w-12 h-12 flex items-center justify-center shrink-0">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
-            <div id="planning-list" class="space-y-3">
+            <div id="planning-list" class="space-y-3 relative z-10">
                 <!-- Items go here -->
             </div>
         </div>
         
-        <button id="shop-btn" onclick="startShopping()" class="btn-main w-full py-4 text-lg shadow-xl hidden animate-pulse">
-            Start Shopping <i class="fas fa-shopping-cart ml-2"></i>
+        <button id="shop-btn" onclick="startShopping()" class="btn-main w-full py-4 text-xl shadow-xl hidden animate-bounce holiday-font">
+            Start Shopping <i class="fas fa-sleigh ml-2"></i>
         </button>
     </div>
 
     <!-- VIEW: SHOP (Cart) -->
     <div id="view-shop" class="hidden pb-24">
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r-lg shadow-sm">
-            <p class="text-xs text-blue-600 font-bold">💡 Pro Tip: Enter the exact price as you grab each item!</p>
+        <div class="bg-red-50 border-l-4 border-red-400 p-3 mb-4 rounded-r-lg shadow-sm">
+            <p class="text-xs text-red-600 font-bold"><i class="fas fa-candy-cane mr-1"></i> Tip: Enter exact prices to check your budget!</p>
         </div>
         
         <div id="cart-list" class="space-y-3">
@@ -279,61 +313,63 @@
         </div>
         
         <div class="mt-8 text-center">
-            <button onclick="promptClearCart()" class="text-xs font-bold text-red-400 uppercase tracking-wider hover:text-red-600 transition-colors">Reset Cart</button>
+            <button onclick="promptClearCart()" class="text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-red-600 transition-colors">
+                <i class="fas fa-trash-alt mr-1"></i> Reset Cart
+            </button>
         </div>
     </div>
 
     <!-- VIEW: CHEF (Meal Buddy) -->
     <div id="view-chef" class="hidden pb-24">
-        <div class="app-card p-5">
-            <h2 class="text-xl font-extrabold text-slate-800 mb-2">Meal Buddy</h2>
-            <div class="bg-orange-50 rounded-xl p-3 mb-4 border border-orange-100">
-                <p class="text-xs font-bold text-orange-800 mb-1 uppercase">Your Ingredients</p>
+        <div class="app-card p-5 border-t-4 border-green-500">
+            <h2 class="text-2xl font-extrabold text-green-800 mb-2 holiday-font"><i class="fas fa-cookie-bite mr-2"></i>Holiday Chef</h2>
+            <div class="bg-yellow-50 rounded-xl p-3 mb-4 border border-yellow-200">
+                <p class="text-xs font-bold text-yellow-800 mb-1 uppercase">Current Pantry</p>
                 <p id="pantry-list-display" class="text-sm text-slate-700 italic">No items in list yet...</p>
             </div>
             
             <div class="space-y-3 mb-6">
                 <label class="text-xs font-bold text-slate-400 uppercase">Preferences</label>
                 <select id="diet-select" class="input-field text-sm font-bold text-slate-700">
-                    <option value="">No Dietary Restrictions</option>
+                    <option value="">No Restrictions</option>
+                    <option value="Christmas Feast">Classic Christmas Feast</option>
                     <option value="Vegetarian">Vegetarian</option>
                     <option value="Vegan">Vegan</option>
-                    <option value="Keto">Keto / Low Carb</option>
                     <option value="Gluten Free">Gluten Free</option>
+                    <option value="Leftovers">Use up Leftovers</option>
                 </select>
             </div>
 
-            <button onclick="launchMealBuddy()" class="btn-main w-full py-4 text-lg shadow-lg bg-gradient-to-r from-purple-500 to-indigo-500 border-none relative overflow-hidden group">
-                <span class="relative z-10"><i class="fas fa-robot mr-2"></i> Open Meal Buddy GPT</span>
+            <button onclick="launchMealBuddy()" class="btn-main w-full py-4 text-lg shadow-lg bg-gradient-to-r from-green-600 to-green-500 border-none relative overflow-hidden group">
+                <span class="relative z-10 holiday-font text-xl"><i class="fas fa-magic mr-2"></i> Ask Meal Buddy AI</span>
             </button>
             
-            <p class="text-[10px] text-center text-slate-400 mt-3">This will copy your prompt & open ChatGPT automatically.</p>
+            <p class="text-[10px] text-center text-slate-400 mt-3">Copies prompt & opens ChatGPT automatically.</p>
         </div>
     </div>
 
     <!-- Navigation -->
     <div class="nav-bar">
         <button onclick="switchTab('plan')" id="nav-plan" class="nav-item active transition-colors">
-            <i class="fas fa-list mb-1"></i> Plan
+            <i class="fas fa-clipboard-list mb-1"></i> Plan
         </button>
         <button onclick="switchTab('shop')" id="nav-shop" class="nav-item transition-colors">
-            <i class="fas fa-shopping-basket mb-1"></i> Shop
+            <i class="fas fa-shopping-bag mb-1"></i> Shop
         </button>
         <button onclick="switchTab('chef')" id="nav-chef" class="nav-item transition-colors">
-            <i class="fas fa-hat-chef mb-1"></i> Chef
+            <i class="fas fa-hat-wizard mb-1"></i> Chef
         </button>
     </div>
 
     <script>
         let state = { items: [], budget: 100 };
         let scanningTargetId = null;
-        
-        // YOUR GPT LINK
         const MEAL_BUDDY_LINK = "https://chatgpt.com/g/g-68e8559d108c819190104c689cd732b1-meal-buddy";
 
         function init() {
             const saved = localStorage.getItem('groceryCoach_v3');
             if(saved) state = JSON.parse(saved);
+            createSnowflakes();
             render();
         }
         function save() {
@@ -341,8 +377,21 @@
             render();
         }
 
-        // --- UI UTILITIES (TOAST & MODAL) ---
-        function showToast(message, type = 'info') {
+        // --- SNOWFALL ---
+        function createSnowflakes() {
+            for(let i=0; i<15; i++) {
+                let snow = document.createElement('div');
+                snow.className = 'snowflake';
+                snow.innerHTML = '❄';
+                snow.style.left = Math.random() * 100 + 'vw';
+                snow.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                snow.style.opacity = Math.random();
+                document.body.appendChild(snow);
+            }
+        }
+
+        // --- UI UTILITIES ---
+        function showToast(message) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerText = message;
             toast.classList.add('active');
@@ -359,13 +408,11 @@
             const inputArea = document.getElementById('modal-input-area');
             const input = document.getElementById('modal-input');
 
-            // Set Content
             title.innerText = config.title;
             body.innerText = config.body || '';
             icon.innerHTML = config.icon || '';
             confirmBtn.innerText = config.confirmText || 'Confirm';
             
-            // Handle Input
             if(config.hasInput) {
                 inputArea.classList.remove('hidden');
                 input.value = config.inputValue || '';
@@ -373,15 +420,9 @@
             } else {
                 inputArea.classList.add('hidden');
             }
-
-            // Show
             overlay.classList.add('active');
-
-            // Handlers
-            const close = () => {
-                overlay.classList.remove('active');
-            };
-
+            
+            const close = () => overlay.classList.remove('active');
             cancelBtn.onclick = close;
             confirmBtn.onclick = () => {
                 if(config.onConfirm) config.onConfirm(config.hasInput ? input.value : null);
@@ -389,45 +430,28 @@
             };
         }
 
-        // --- BARCODE SCANNER (QuaggaJS) ---
+        // --- BARCODE SCANNER ---
         function startScanner(targetInputId) {
             scanningTargetId = targetInputId;
-            const container = document.getElementById('scanner-container');
-            container.style.display = 'block';
-            
+            document.getElementById('scanner-container').style.display = 'block';
             Quagga.init({
-                inputStream : {
-                    name : "Live",
-                    type : "LiveStream",
-                    target: document.querySelector('#interactive')
-                },
-                decoder : {
-                    readers : ["ean_reader", "upc_reader"] // Common barcodes
-                }
+                inputStream : { name : "Live", type : "LiveStream", target: document.querySelector('#interactive') },
+                decoder : { readers : ["ean_reader", "upc_reader"] }
             }, function(err) {
-                if (err) { 
-                    console.log(err); 
-                    showToast("Camera access error. Try typing.", "error");
-                    stopScanner();
-                    return;
-                }
+                if (err) { console.log(err); showToast("Camera error. Please type."); stopScanner(); return; }
                 Quagga.start();
             });
-
             Quagga.onDetected(function(result) {
                 const code = result.codeResult.code;
                 const target = document.getElementById(scanningTargetId);
                 if(target) target.value = code;
-                
                 stopScanner();
-                
                 if(scanningTargetId === 'new-item') {
-                    showToast(`Scanned: ${code}. Enter name now.`);
+                    showToast(`Scanned! Name the item.`);
                     document.getElementById('new-item').focus();
                 }
             });
         }
-
         function stopScanner() {
             Quagga.stop();
             document.getElementById('scanner-container').style.display = 'none';
@@ -440,90 +464,58 @@
             if(!name) return;
             state.items.push({ id: Date.now(), name, price: 0, status: 'planned' });
             input.value = '';
-            showToast("Item added to plan!");
+            showToast("Added to Holiday List!");
             save();
         }
 
         function toggleItemStatus(id) {
             const item = state.items.find(i => i.id === id);
             if(!item) return;
-            if(item.status === 'planned') {
-                item.status = 'checked';
-                // Move to bottom of plan visually by re-rendering
-            } else if(item.status === 'checked') {
-                item.status = 'planned';
-            }
+            item.status = item.status === 'planned' ? 'checked' : 'planned';
             save();
         }
         
         function startShopping() {
             let count = 0;
-            state.items.forEach(i => { 
-                if(i.status === 'checked') {
-                    i.status = 'cart'; 
-                    count++;
-                }
-            });
+            state.items.forEach(i => { if(i.status === 'checked') { i.status = 'cart'; count++; } });
             save();
-            if(count > 0) {
-                switchTab('shop');
-                showToast(`Moved ${count} items to Cart`);
-            } else {
-                showToast("Check items off your plan first!");
-            }
+            if(count > 0) { switchTab('shop'); showToast(`Moved ${count} items to Cart`); }
+            else { showToast("Check items off first!"); }
         }
 
         function updatePrice(id, price) {
             const item = state.items.find(i => i.id === id);
-            if(item) {
-                item.price = parseFloat(price) || 0;
-                save(); 
-            }
+            if(item) { item.price = parseFloat(price) || 0; save(); }
         }
         
         function promptDeleteItem(id) {
             showModal({
-                title: "Remove Item?",
-                body: "This will delete it from your list permanently.",
+                title: "Remove Gift?",
+                body: "Delete from list permanently?",
                 icon: '<i class="fas fa-trash-alt"></i>',
                 confirmText: "Delete",
-                onConfirm: () => {
-                    state.items = state.items.filter(i => i.id !== id);
-                    save();
-                    showToast("Item deleted");
-                }
+                onConfirm: () => { state.items = state.items.filter(i => i.id !== id); save(); }
             });
         }
 
         function promptBudget() {
             showModal({
-                title: "Set Budget Limit",
+                title: "Holiday Budget",
                 hasInput: true,
                 inputValue: state.budget,
                 icon: '<i class="fas fa-wallet"></i>',
                 confirmText: "Save",
-                onConfirm: (val) => {
-                    if(val && !isNaN(val)) {
-                        state.budget = parseFloat(val);
-                        save();
-                        showToast("Budget updated!");
-                    }
-                }
+                onConfirm: (val) => { if(val && !isNaN(val)) { state.budget = parseFloat(val); save(); showToast("Budget Saved!"); } }
             });
         }
         
         function promptClearCart() {
             showModal({
                 title: "Reset Cart?",
-                body: "This will remove all items currently in your cart. Plan items remain.",
-                icon: '<i class="fas fa-redo"></i>',
-                confirmText: "Clear Cart",
-                onConfirm: () => {
-                    // Filter out cart items, keep planned items
-                    state.items = state.items.filter(i => i.status !== 'cart');
-                    save();
-                    showToast("Cart cleared");
-                }
+                body: "Clear cart items? (Plan stays safe)",
+                icon: '<i class="fas fa-snowplow"></i>',
+                confirmText: "Clear",
+                onConfirm: () => { state.items = state.items.filter(i => i.status !== 'cart'); save(); showToast("Cart Cleared"); }
             });
         }
 
@@ -531,28 +523,22 @@
         function launchMealBuddy() {
             const ingredients = state.items.map(i => i.name).join(", ");
             const diet = document.getElementById('diet-select').value;
-            
-            if(!ingredients) {
-                showToast("Add items to your list first!");
-                return;
-            }
+            if(!ingredients) { showToast("List is empty!"); return; }
 
-            const promptText = `Hi Meal Buddy! I have these ingredients: [${ingredients}]. 
+            const promptText = `Hi Meal Buddy! It's Christmas time. I have: [${ingredients}]. 
             Preferences: ${diet || 'None'}. 
-            Create a 3-day meal plan with recipes using these items. Minimize waste.`;
+            Create a festive meal plan/recipe. Minimize waste.`;
 
-            // IFrame safe copy
             const textArea = document.createElement("textarea");
             textArea.value = promptText;
             document.body.appendChild(textArea);
             textArea.select();
             try {
                 document.execCommand('copy');
-                showToast("Prompt copied! Opening GPT...");
+                showToast("Copied! Opening AI...");
                 setTimeout(() => window.open(MEAL_BUDDY_LINK, '_blank'), 1000);
             } catch (err) {
-                console.error('Fallback copy failed', err);
-                showToast("Couldn't copy prompt. Opening anyway...");
+                showToast("Opening AI...");
                 setTimeout(() => window.open(MEAL_BUDDY_LINK, '_blank'), 1000);
             }
             document.body.removeChild(textArea);
@@ -569,35 +555,29 @@
         function renderPlan() {
             const list = document.getElementById('planning-list');
             list.innerHTML = '';
-            // Sort: Planned first, Checked last
             const planItems = state.items.filter(i => i.status === 'planned' || i.status === 'checked')
                                          .sort((a,b) => (a.status === 'checked') - (b.status === 'checked'));
             
             const hasChecked = planItems.some(i => i.status === 'checked');
             
-            if(planItems.length === 0) list.innerHTML = '<div class="text-center text-slate-300 font-bold py-8">List is empty</div>';
+            if(planItems.length === 0) list.innerHTML = '<div class="text-center text-slate-300 font-bold py-8"><i class="fas fa-clipboard-list text-4xl mb-2 opacity-30"></i><br>Nice List is empty</div>';
 
             planItems.forEach(item => {
                 const isChecked = item.status === 'checked';
                 list.innerHTML += `
-                    <div class="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${isChecked ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100 hover:border-orange-200'}" onclick="toggleItemStatus(${item.id})">
+                    <div class="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${isChecked ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100 shadow-sm'}" onclick="toggleItemStatus(${item.id})">
                         <div class="flex items-center gap-3">
-                            <div class="w-6 h-6 rounded-full border-2 ${isChecked ? 'bg-green-500 border-green-500' : 'border-slate-200'} flex items-center justify-center transition-colors">
+                            <div class="w-6 h-6 rounded-full border-2 ${isChecked ? 'bg-green-600 border-green-600' : 'border-slate-200'} flex items-center justify-center transition-colors">
                                 ${isChecked ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
                             </div>
                             <span class="font-bold ${isChecked ? 'text-slate-400 line-through' : 'text-slate-700'}">${item.name}</span>
                         </div>
-                        <button onclick="event.stopPropagation(); promptDeleteItem(${item.id})" class="text-slate-300 hover:text-red-400 px-2 transition-colors"><i class="fas fa-times"></i></button>
+                        <button onclick="event.stopPropagation(); promptDeleteItem(${item.id})" class="text-slate-300 hover:text-red-500 px-2 transition-colors"><i class="fas fa-times"></i></button>
                     </div>
                 `;
             });
-            
             const shopBtn = document.getElementById('shop-btn');
-            if(hasChecked) {
-                shopBtn.classList.remove('hidden'); 
-            } else {
-                shopBtn.classList.add('hidden');
-            }
+            shopBtn.classList.toggle('hidden', !hasChecked);
         }
 
         function renderShop() {
@@ -605,19 +585,19 @@
             list.innerHTML = '';
             const cartItems = state.items.filter(i => i.status === 'cart');
 
-            if(cartItems.length === 0) list.innerHTML = '<div class="text-center text-slate-300 font-bold py-8">Cart is empty.<br>Go to Plan tab to add items!</div>';
+            if(cartItems.length === 0) list.innerHTML = '<div class="text-center text-slate-300 font-bold py-8">Cart is empty.<br>Start checking your list!</div>';
 
             cartItems.forEach(item => {
                 list.innerHTML += `
-                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                    <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-red-100 shadow-sm">
                         <div class="flex-1 font-bold text-slate-700">${item.name}</div>
-                        <div class="flex items-center bg-slate-50 rounded-lg px-2 border border-slate-200 focus-within:border-orange-400 focus-within:bg-white transition-colors">
-                            <span class="text-slate-400 text-sm font-bold mr-1">$</span>
+                        <div class="flex items-center bg-red-50 rounded-lg px-2 border border-red-100 focus-within:border-red-400 transition-colors">
+                            <span class="text-red-300 text-sm font-bold mr-1">$</span>
                             <input type="number" step="0.01" class="bg-transparent w-16 py-2 text-right font-bold text-slate-800 focus:outline-none" 
                                 value="${item.price || ''}" placeholder="0.00"
                                 onchange="updatePrice(${item.id}, this.value)">
                         </div>
-                        <button onclick="promptDeleteItem(${item.id})" class="text-slate-300 hover:text-red-400 px-2 transition-colors"><i class="fas fa-times"></i></button>
+                        <button onclick="promptDeleteItem(${item.id})" class="text-slate-300 hover:text-red-500 px-2 transition-colors"><i class="fas fa-times"></i></button>
                     </div>
                 `;
             });
@@ -626,11 +606,7 @@
         function renderChef() {
             const display = document.getElementById('pantry-list-display');
             const names = state.items.map(i => i.name);
-            if(names.length > 0) {
-                display.innerText = names.join(", ");
-            } else {
-                display.innerText = "Add items to your list to see them here!";
-            }
+            display.innerText = names.length > 0 ? names.join(", ") : "Fill your stocking first!";
         }
 
         function updateBudgetUI() {
@@ -639,11 +615,10 @@
             document.getElementById('spend-display').innerText = `$${spent.toFixed(2)}`;
             document.getElementById('remaining-display').innerText = `$${remaining.toFixed(2)}`;
             const banner = document.getElementById('budget-banner');
-            if(remaining < 0) banner.classList.add('over'); else banner.classList.remove('over');
+            banner.classList.toggle('over', remaining < 0);
         }
 
         function handleEnter(e, cb) { if(e.key === 'Enter') cb(); }
-
         function switchTab(tab) {
             ['plan', 'shop', 'chef'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('hidden');
@@ -654,7 +629,6 @@
         }
 
         init();
-        
     </script>
 </body>
 </html>
