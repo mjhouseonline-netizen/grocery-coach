@@ -1,4 +1,3 @@
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -62,7 +61,7 @@
             border-radius: 18px;
             position: sticky;
             top: 10px;
-            z-index: 50;
+            z-index: 40;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
         .budget-bar.over { background: #FF6B6B; }
@@ -125,17 +124,98 @@
             100% { top: 70%; opacity: 0; }
         }
 
+        /* Custom Modal & Toast Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(2px);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #2D3436;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            z-index: 400;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: max-content;
+            max-width: 90%;
+        }
+        .toast.active {
+            transform: translateX(-50%) translateY(0);
+        }
+        
         .hidden { display: none; }
     </style>
 </head>
 <body class="px-4 pt-4 max-w-md mx-auto">
 
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-info-circle text-orange-400"></i>
+        <span id="toast-message">Notification</span>
+    </div>
+
+    <!-- Custom Generic Modal -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-icon" class="text-4xl mb-4 text-orange-500"></div>
+            <h3 id="modal-title" class="text-xl font-extrabold text-slate-800 mb-2"></h3>
+            <p id="modal-body" class="text-sm text-slate-500 mb-6"></p>
+            
+            <!-- Dynamic Content Area (Inputs etc) -->
+            <div id="modal-input-area" class="mb-4 hidden">
+                <input type="text" id="modal-input" class="input-field text-center font-bold text-lg">
+            </div>
+
+            <div class="flex gap-2 justify-center">
+                <button id="modal-cancel" class="px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-100 transition-colors">Cancel</button>
+                <button id="modal-confirm" class="px-8 py-3 rounded-xl font-bold bg-orange-500 text-white shadow-lg shadow-orange-200">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scanner Overlay -->
     <div id="scanner-container">
         <div id="interactive" class="viewport"></div>
         <div class="scan-line"></div>
-        <button onclick="stopScanner()" class="absolute top-8 right-8 text-white text-4xl z-50">&times;</button>
-        <div class="absolute bottom-10 left-0 right-0 text-center text-white font-bold">
+        <button onclick="stopScanner()" class="absolute top-8 right-8 text-white text-4xl z-50 hover:text-red-400 transition-colors">&times;</button>
+        <div class="absolute bottom-10 left-0 right-0 text-center text-white font-bold p-4 bg-black/50 backdrop-blur-sm">
             Point camera at barcode
         </div>
     </div>
@@ -146,8 +226,8 @@
             <h1 class="text-2xl font-extrabold text-slate-800">Grocery Coach</h1>
             <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Day 12 Edition</p>
         </div>
-        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
-            <i class="fas fa-carrot"></i>
+        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 shadow-sm">
+            <i class="fas fa-carrot text-lg"></i>
         </div>
     </div>
 
@@ -155,14 +235,14 @@
     <div id="budget-banner" class="budget-bar p-4 mb-6 flex justify-between items-center transition-colors duration-300">
         <div>
             <p class="text-[10px] font-bold uppercase opacity-60 mb-1">Remaining Budget</p>
-            <p id="remaining-display" class="text-3xl font-black">$100.00</p>
+            <p id="remaining-display" class="text-3xl font-black tracking-tight">$100.00</p>
         </div>
         <div class="text-right">
             <div class="bg-white/10 px-3 py-1 rounded-lg mb-1">
                 <span class="text-xs font-bold opacity-80">Total: </span>
                 <span id="spend-display" class="font-bold">$0.00</span>
             </div>
-            <button onclick="editBudget()" class="text-xs font-bold underline opacity-60 hover:opacity-100">Edit Limit</button>
+            <button onclick="promptBudget()" class="text-xs font-bold underline opacity-60 hover:opacity-100">Edit Limit</button>
         </div>
     </div>
 
@@ -170,7 +250,7 @@
     <div id="view-plan" class="pb-24">
         <div class="app-card p-4 mb-4">
             <div class="flex gap-2 mb-4">
-                <button onclick="startScanner('new-item')" class="text-slate-400 hover:text-slate-600 px-2">
+                <button onclick="startScanner('new-item')" class="text-slate-400 hover:text-orange-500 px-2 transition-colors">
                     <i class="fas fa-barcode text-xl"></i>
                 </button>
                 <input type="text" id="new-item" placeholder="Add item..." class="input-field w-full p-3 font-bold text-slate-700" onkeypress="handleEnter(event, addItem)">
@@ -183,14 +263,14 @@
             </div>
         </div>
         
-        <button id="shop-btn" onclick="startShopping()" class="btn-main w-full py-4 text-lg shadow-xl hidden animate-bounce">
+        <button id="shop-btn" onclick="startShopping()" class="btn-main w-full py-4 text-lg shadow-xl hidden animate-pulse">
             Start Shopping <i class="fas fa-shopping-cart ml-2"></i>
         </button>
     </div>
 
     <!-- VIEW: SHOP (Cart) -->
     <div id="view-shop" class="hidden pb-24">
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r-lg">
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r-lg shadow-sm">
             <p class="text-xs text-blue-600 font-bold">💡 Pro Tip: Enter the exact price as you grab each item!</p>
         </div>
         
@@ -199,7 +279,7 @@
         </div>
         
         <div class="mt-8 text-center">
-            <button onclick="clearCart()" class="text-xs font-bold text-red-400 uppercase tracking-wider">Reset Cart</button>
+            <button onclick="promptClearCart()" class="text-xs font-bold text-red-400 uppercase tracking-wider hover:text-red-600 transition-colors">Reset Cart</button>
         </div>
     </div>
 
@@ -213,32 +293,34 @@
             </div>
             
             <div class="space-y-3 mb-6">
+                <label class="text-xs font-bold text-slate-400 uppercase">Preferences</label>
                 <select id="diet-select" class="input-field text-sm font-bold text-slate-700">
                     <option value="">No Dietary Restrictions</option>
                     <option value="Vegetarian">Vegetarian</option>
                     <option value="Vegan">Vegan</option>
                     <option value="Keto">Keto / Low Carb</option>
+                    <option value="Gluten Free">Gluten Free</option>
                 </select>
             </div>
 
-            <button onclick="launchMealBuddy()" class="btn-main w-full py-4 text-lg shadow-lg bg-gradient-to-r from-purple-500 to-indigo-500 border-none">
-                <i class="fas fa-robot mr-2"></i> Open Meal Buddy GPT
+            <button onclick="launchMealBuddy()" class="btn-main w-full py-4 text-lg shadow-lg bg-gradient-to-r from-purple-500 to-indigo-500 border-none relative overflow-hidden group">
+                <span class="relative z-10"><i class="fas fa-robot mr-2"></i> Open Meal Buddy GPT</span>
             </button>
             
-            <p class="text-[10px] text-center text-slate-400 mt-3">Copies prompt & opens your GPT automatically.</p>
+            <p class="text-[10px] text-center text-slate-400 mt-3">This will copy your prompt & open ChatGPT automatically.</p>
         </div>
     </div>
 
     <!-- Navigation -->
     <div class="nav-bar">
-        <button onclick="switchTab('plan')" id="nav-plan" class="nav-item active">
-            <i class="fas fa-list"></i> Plan
+        <button onclick="switchTab('plan')" id="nav-plan" class="nav-item active transition-colors">
+            <i class="fas fa-list mb-1"></i> Plan
         </button>
-        <button onclick="switchTab('shop')" id="nav-shop" class="nav-item">
-            <i class="fas fa-shopping-basket"></i> Shop
+        <button onclick="switchTab('shop')" id="nav-shop" class="nav-item transition-colors">
+            <i class="fas fa-shopping-basket mb-1"></i> Shop
         </button>
-        <button onclick="switchTab('chef')" id="nav-chef" class="nav-item">
-            <i class="fas fa-hat-chef"></i> Chef
+        <button onclick="switchTab('chef')" id="nav-chef" class="nav-item transition-colors">
+            <i class="fas fa-hat-chef mb-1"></i> Chef
         </button>
     </div>
 
@@ -259,10 +341,59 @@
             render();
         }
 
+        // --- UI UTILITIES (TOAST & MODAL) ---
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        function showModal(config) {
+            const overlay = document.getElementById('custom-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            const icon = document.getElementById('modal-icon');
+            const confirmBtn = document.getElementById('modal-confirm');
+            const cancelBtn = document.getElementById('modal-cancel');
+            const inputArea = document.getElementById('modal-input-area');
+            const input = document.getElementById('modal-input');
+
+            // Set Content
+            title.innerText = config.title;
+            body.innerText = config.body || '';
+            icon.innerHTML = config.icon || '';
+            confirmBtn.innerText = config.confirmText || 'Confirm';
+            
+            // Handle Input
+            if(config.hasInput) {
+                inputArea.classList.remove('hidden');
+                input.value = config.inputValue || '';
+                setTimeout(() => input.focus(), 100);
+            } else {
+                inputArea.classList.add('hidden');
+            }
+
+            // Show
+            overlay.classList.add('active');
+
+            // Handlers
+            const close = () => {
+                overlay.classList.remove('active');
+            };
+
+            cancelBtn.onclick = close;
+            confirmBtn.onclick = () => {
+                if(config.onConfirm) config.onConfirm(config.hasInput ? input.value : null);
+                close();
+            };
+        }
+
         // --- BARCODE SCANNER (QuaggaJS) ---
         function startScanner(targetInputId) {
             scanningTargetId = targetInputId;
-            document.getElementById('scanner-container').style.display = 'block';
+            const container = document.getElementById('scanner-container');
+            container.style.display = 'block';
             
             Quagga.init({
                 inputStream : {
@@ -274,16 +405,25 @@
                     readers : ["ean_reader", "upc_reader"] // Common barcodes
                 }
             }, function(err) {
-                if (err) { console.log(err); return }
+                if (err) { 
+                    console.log(err); 
+                    showToast("Camera access error. Try typing.", "error");
+                    stopScanner();
+                    return;
+                }
                 Quagga.start();
             });
 
             Quagga.onDetected(function(result) {
                 const code = result.codeResult.code;
-                document.getElementById(scanningTargetId).value = code; // Fill input
+                const target = document.getElementById(scanningTargetId);
+                if(target) target.value = code;
+                
                 stopScanner();
+                
                 if(scanningTargetId === 'new-item') {
-                    alert("Scanned: " + code + "\n(Enter name manually)");
+                    showToast(`Scanned: ${code}. Enter name now.`);
+                    document.getElementById('new-item').focus();
                 }
             });
         }
@@ -300,21 +440,37 @@
             if(!name) return;
             state.items.push({ id: Date.now(), name, price: 0, status: 'planned' });
             input.value = '';
+            showToast("Item added to plan!");
             save();
         }
 
         function toggleItemStatus(id) {
             const item = state.items.find(i => i.id === id);
             if(!item) return;
-            if(item.status === 'planned') item.status = 'checked';
-            else if(item.status === 'checked') item.status = 'planned';
+            if(item.status === 'planned') {
+                item.status = 'checked';
+                // Move to bottom of plan visually by re-rendering
+            } else if(item.status === 'checked') {
+                item.status = 'planned';
+            }
             save();
         }
         
         function startShopping() {
-            state.items.forEach(i => { if(i.status === 'checked') i.status = 'cart'; });
+            let count = 0;
+            state.items.forEach(i => { 
+                if(i.status === 'checked') {
+                    i.status = 'cart'; 
+                    count++;
+                }
+            });
             save();
-            switchTab('shop');
+            if(count > 0) {
+                switchTab('shop');
+                showToast(`Moved ${count} items to Cart`);
+            } else {
+                showToast("Check items off your plan first!");
+            }
         }
 
         function updatePrice(id, price) {
@@ -325,20 +481,50 @@
             }
         }
         
-        function deleteItem(id) {
-            if(confirm("Remove item?")) {
-                state.items = state.items.filter(i => i.id !== id);
-                save();
-            }
+        function promptDeleteItem(id) {
+            showModal({
+                title: "Remove Item?",
+                body: "This will delete it from your list permanently.",
+                icon: '<i class="fas fa-trash-alt"></i>',
+                confirmText: "Delete",
+                onConfirm: () => {
+                    state.items = state.items.filter(i => i.id !== id);
+                    save();
+                    showToast("Item deleted");
+                }
+            });
         }
 
-        function editBudget() {
-            const val = prompt("Set Budget:", state.budget);
-            if(val) { state.budget = parseFloat(val); save(); }
+        function promptBudget() {
+            showModal({
+                title: "Set Budget Limit",
+                hasInput: true,
+                inputValue: state.budget,
+                icon: '<i class="fas fa-wallet"></i>',
+                confirmText: "Save",
+                onConfirm: (val) => {
+                    if(val && !isNaN(val)) {
+                        state.budget = parseFloat(val);
+                        save();
+                        showToast("Budget updated!");
+                    }
+                }
+            });
         }
         
-        function clearCart() {
-            if(confirm("Clear all items?")) { state.items = []; save(); }
+        function promptClearCart() {
+            showModal({
+                title: "Reset Cart?",
+                body: "This will remove all items currently in your cart. Plan items remain.",
+                icon: '<i class="fas fa-redo"></i>',
+                confirmText: "Clear Cart",
+                onConfirm: () => {
+                    // Filter out cart items, keep planned items
+                    state.items = state.items.filter(i => i.status !== 'cart');
+                    save();
+                    showToast("Cart cleared");
+                }
+            });
         }
 
         // --- AI LOGIC ---
@@ -347,18 +533,29 @@
             const diet = document.getElementById('diet-select').value;
             
             if(!ingredients) {
-                alert("Add items to your list first!");
+                showToast("Add items to your list first!");
                 return;
             }
 
-            const prompt = `Hi Meal Buddy! I have these ingredients: [${ingredients}]. 
+            const promptText = `Hi Meal Buddy! I have these ingredients: [${ingredients}]. 
             Preferences: ${diet || 'None'}. 
             Create a 3-day meal plan with recipes using these items. Minimize waste.`;
 
-            navigator.clipboard.writeText(prompt).then(() => {
-                window.open(MEAL_BUDDY_LINK, '_blank');
-                // Optional: Show toast/alert
-            });
+            // IFrame safe copy
+            const textArea = document.createElement("textarea");
+            textArea.value = promptText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Prompt copied! Opening GPT...");
+                setTimeout(() => window.open(MEAL_BUDDY_LINK, '_blank'), 1000);
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+                showToast("Couldn't copy prompt. Opening anyway...");
+                setTimeout(() => window.open(MEAL_BUDDY_LINK, '_blank'), 1000);
+            }
+            document.body.removeChild(textArea);
         }
 
         // --- RENDERERS ---
@@ -372,7 +569,10 @@
         function renderPlan() {
             const list = document.getElementById('planning-list');
             list.innerHTML = '';
-            const planItems = state.items.filter(i => i.status === 'planned' || i.status === 'checked');
+            // Sort: Planned first, Checked last
+            const planItems = state.items.filter(i => i.status === 'planned' || i.status === 'checked')
+                                         .sort((a,b) => (a.status === 'checked') - (b.status === 'checked'));
+            
             const hasChecked = planItems.some(i => i.status === 'checked');
             
             if(planItems.length === 0) list.innerHTML = '<div class="text-center text-slate-300 font-bold py-8">List is empty</div>';
@@ -380,20 +580,24 @@
             planItems.forEach(item => {
                 const isChecked = item.status === 'checked';
                 list.innerHTML += `
-                    <div class="flex items-center justify-between p-3 rounded-xl border ${isChecked ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100'}" onclick="toggleItemStatus(${item.id})">
+                    <div class="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${isChecked ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100 hover:border-orange-200'}" onclick="toggleItemStatus(${item.id})">
                         <div class="flex items-center gap-3">
-                            <div class="w-6 h-6 rounded-full border-2 ${isChecked ? 'bg-green-50 border-green-500' : 'border-slate-200'} flex items-center justify-center">
+                            <div class="w-6 h-6 rounded-full border-2 ${isChecked ? 'bg-green-500 border-green-500' : 'border-slate-200'} flex items-center justify-center transition-colors">
                                 ${isChecked ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
                             </div>
                             <span class="font-bold ${isChecked ? 'text-slate-400 line-through' : 'text-slate-700'}">${item.name}</span>
                         </div>
-                        <button onclick="event.stopPropagation(); deleteItem(${item.id})" class="text-slate-300 hover:text-red-400 px-2"><i class="fas fa-times"></i></button>
+                        <button onclick="event.stopPropagation(); promptDeleteItem(${item.id})" class="text-slate-300 hover:text-red-400 px-2 transition-colors"><i class="fas fa-times"></i></button>
                     </div>
                 `;
             });
             
             const shopBtn = document.getElementById('shop-btn');
-            if(hasChecked) shopBtn.classList.remove('hidden'); else shopBtn.classList.add('hidden');
+            if(hasChecked) {
+                shopBtn.classList.remove('hidden'); 
+            } else {
+                shopBtn.classList.add('hidden');
+            }
         }
 
         function renderShop() {
@@ -407,13 +611,13 @@
                 list.innerHTML += `
                     <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
                         <div class="flex-1 font-bold text-slate-700">${item.name}</div>
-                        <div class="flex items-center bg-slate-50 rounded-lg px-2 border border-slate-200">
+                        <div class="flex items-center bg-slate-50 rounded-lg px-2 border border-slate-200 focus-within:border-orange-400 focus-within:bg-white transition-colors">
                             <span class="text-slate-400 text-sm font-bold mr-1">$</span>
                             <input type="number" step="0.01" class="bg-transparent w-16 py-2 text-right font-bold text-slate-800 focus:outline-none" 
                                 value="${item.price || ''}" placeholder="0.00"
                                 onchange="updatePrice(${item.id}, this.value)">
                         </div>
-                        <button onclick="deleteItem(${item.id})" class="text-slate-300 hover:text-red-400 px-2"><i class="fas fa-times"></i></button>
+                        <button onclick="promptDeleteItem(${item.id})" class="text-slate-300 hover:text-red-400 px-2 transition-colors"><i class="fas fa-times"></i></button>
                     </div>
                 `;
             });
